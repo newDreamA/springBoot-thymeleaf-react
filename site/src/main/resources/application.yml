@@ -1,0 +1,23 @@
+spring:
+  profiles:
+    active: @profiles@
+  application:
+    name: compute-service
+  thymeleaf:
+    prefix: /WEB-INF/views/
+    suffix: .html
+    cache: false
+    mode: HTML5
+    encoding: UTF-8
+    content-type: text/html;charset=UTF-8
+
+server:
+  port: 8000
+  tomcat:
+    uri-encoding: UTF-8
+    access-log-enable: true
+    basedir: target/tomcat
+
+logging:
+  level: info
+

@@ -1,0 +1,123 @@
+def vJavaLang = '1.8'
+
+def libProjects = [project(':common')]
+def javaProjects = [project(':site'),project(':service')]
+def bootProjects = [project(':site')]
+
+buildscript {
+    ext {
+        springBootVersion = '1.4.5.RELEASE'
+    }
+    repositories {
+
+        mavenLocal()
+        mavenCentral()
+        maven { url 'http://nexus.tuniu.org/nexus/content/groups/public/' }
+        jcenter { url 'https://plugins.gradle.org/m2/'}
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+        classpath("com.moowork.gradle:gradle-node-plugin:1.1.1")
+        classpath 'org.springframework:springloaded:1.2.6.RELEASE'
+    }
+}
+
+configure(allprojects) {
+    apply plugin: 'eclipse'
+    apply plugin: 'idea'
+
+
+    idea.module {
+        excludeDirs += [
+                file('bin'),      // containing build artifacts from Eclipse (if any)
+                file('work'),     // containing transient artifacts used by embedded Tomcat
+                file('logs'),     // containing app logs written by embedded Tomcat
+                file('data'),     // containing logs and data written by elasticsearch
+                file('.settings') // containing intentionally checked-in Eclipse metadata
+        ]
+    }
+}
+
+
+configure(libProjects) {
+    apply plugin: 'java'
+    apply plugin: 'maven-publish'   // to publish jar to remote maven repository
+
+    group = 'com.txw'
+    version = '1.0'
+
+    task sourceJar(type: Jar) {
+        from sourceSets.main.allJava
+    }
+
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                from components.java
+
+                artifactId "${project.name}"
+
+                artifact sourceJar {
+                    classifier "sources"
+                }
+            }
+        }
+    }
+
+    publishing {
+        repositories {
+            maven {
+                credentials {
+                    username ''
+                    password ''
+                }
+                url "/repositories/${project.version.endsWith('-SNAPSHOT') ? 'snapshots' : 'releases'}/"
+            }
+        }
+    }
+}
+
+
+configure(javaProjects) {
+    apply plugin: 'java'
+    apply plugin: 'groovy'
+    tasks.withType(JavaCompile) {
+        options.encoding = 'UTF-8'
+    }
+
+    targetCompatibility = vJavaLang
+    sourceCompatibility = vJavaLang
+
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        maven { url 'http://nexus.tuniu.org/nexus/content/groups/public/' }
+    }
+
+
+    // Ensure that all Gradle-compiled classes are available to Eclipse's
+    // classpath.
+    eclipseClasspath.dependsOn testClasses
+
+    // Skip generation and removal of .settings/org.eclipse.jdt.core.prefs files
+    // during the normal `gradle eclipse` / `gradle cleanEclipse` lifecycle, as
+    // these files have been checked in with formatting settings imported from
+    // style/sagan-format.xml and style/sagan.importorder.
+    // See http://www.gradle.org/docs/current/userguide/eclipse_plugin.html
+    eclipseJdt.onlyIf { false }
+    cleanEclipseJdt.onlyIf { false }
+}
+
+configure(bootProjects){
+    apply plugin: 'war'
+    apply plugin: 'spring-boot'
+    apply plugin: 'application'
+    applicationDefaultJvmArgs=["-Dfile.encoding=UTF-8"]
+}
+
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven { url 'http://nexus.tuniu.org/nexus/content/groups/public/' }
+}

@@ -1,0 +1,54 @@
+
+war {
+    baseName = 'spring-react'
+    war.rootSpec.exclude('src/main/webapp/node_modules/**','src/main/webapp/resources/js/**')
+}
+
+bootRun {
+    addResources = false
+}
+
+springBoot {
+    mainClass = 'com.txw.Application'
+}
+
+processResources {
+    filter org.apache.tools.ant.filters.ReplaceTokens, tokens: [
+            profiles: profiles
+    ]
+}
+
+
+apply plugin: "com.moowork.node"
+
+
+node {
+    version = '5.10.1'
+    npmVersion = '3.8.6'
+    download = true
+}
+
+task bundle(type: NpmTask) {
+    inputs.dir(new File('assets'))
+    inputs.dir(new File('src'))
+    outputs.dir(new File('dist'))
+    args = ['run', 'bundle']
+}
+
+task watch(type:NpmTask){
+    args = ['run','watch']
+}
+
+
+bundle.dependsOn(npm_install)
+watch.dependsOn(npm_install)
+
+dependencies {
+    compile project(':service')
+    providedRuntime("org.springframework.boot:spring-boot-starter-tomcat")
+    compile ('org.springframework.boot:spring-boot-starter-web')
+    compile("org.springframework.boot:spring-boot-starter-actuator")
+    compile('org.springframework.boot:spring-boot-starter-thymeleaf')
+    compile ('org.springframework.boot:spring-boot-starter-test')
+
+}

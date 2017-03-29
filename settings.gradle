@@ -1,0 +1,6 @@
+rootProject.name = 'springBootPractice'
+include 'site'
+include 'service'
+include 'common'
+include 'web-frontend'
+
